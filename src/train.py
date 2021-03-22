@@ -5,10 +5,12 @@ from torch import nn
 import torchvision
 from torchvision import transforms
 
+from dataloader import BoomerDatasetContainer
+
 class TrainingSuite:
 
     def __init__(self, model, optimiser, loss_fn, trainloader):
-        self.model = model 
+        self.model = model.float()
         self.trainloader = trainloader
         self.optimiser = optimiser
         self.loss_fn = loss_fn
@@ -23,7 +25,7 @@ class TrainingSuite:
 
                 self.optimiser.zero_grad()
 
-                y_hat = self.model(x)
+                y_hat = self.model(x.float())
                 loss = self.loss_fn(y_hat, y)
                 loss.backward()
                 self.optimiser.step()
@@ -58,11 +60,31 @@ class TrainingSuiteCifar(TrainingSuite):
 
         super().__init__(model, optimiser, loss_fn, trainloader)
 
+class TrainingSuiteBoomer(TrainingSuite):
+
+    def __init__(self):
+        transform = None
+        trainset = BoomerDatasetContainer(is_training=True)
+
+        trainloader = torch.utils.data.DataLoader(trainset,
+                                                  batch_size=4,
+                                                  shuffle=True,
+                                                  num_workers=2)
+
+        model = Model()
+
+        optimiser = optim.Adam(model.parameters(), lr=0.001)
+
+        loss_fn = nn.CrossEntropyLoss()
+
+        super().__init__(model, optimiser, loss_fn, trainloader)
+
+
 
         
 
 if __name__ == "__main__":
-    MODEL_PATH = '../saved_models/cifar.pth'
-    training_suite = TrainingSuiteCifar()
-    training_suite.train(n_epochs = 3)
+    MODEL_PATH = '../saved_models/boomer.pth'
+    training_suite = TrainingSuiteBoomer()
+    training_suite.train(n_epochs=3)
     training_suite.save_model(MODEL_PATH)
