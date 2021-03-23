@@ -43,8 +43,7 @@ class Model(nn.Module):
         self.fc2 = nn.Linear(out_lin1, out_lin2)
 
         # output: boomer or not boomer
-        # self.fc3 = nn.Linear(out_lin2, final_out)
-        self.fc3 = nn.Linear(out_lin2, 2)
+        self.fc3 = nn.Linear(out_lin2, final_out)
 
         self.sigmoid = nn.Sigmoid()
     
@@ -52,6 +51,8 @@ class Model(nn.Module):
         '''
         INPUTS:
             tensor x: (nr_samples, nr_channels (3), nr_x_pixels (32), nr_y_pixels (32))
+        RETURNS:
+            boomer probability
         '''
         # Max pooling over 2x2 window
         x = self.pool(F.relu(self.conv1(x)))
@@ -60,8 +61,7 @@ class Model(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        return x
-        # return self.sigmoid(x)
+        return x.view(-1)
 
 if __name__ == "__main__":
     model = Model()
