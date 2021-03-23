@@ -12,10 +12,21 @@ import fnmatch
 
 from dataOrganiser import MetaData
 from utils import imshow
+import config
 
 class BoomerDataset(Dataset):
+    '''
+    Custom pyTorch dataset, loads the metadata file and transforms
+    images into the right format
+    '''
 
     def __init__(self, meta_frame, transform, is_training):
+        '''
+        PARAMS:
+            pd.DataFrame meta_frame: metadata dataframe
+            torchvision.transform: transforms images into desired shape
+            bool is_training: determines whether it loads training/testing data
+        '''
         self.transform = transform
 
         # dataframe of metadata
@@ -31,6 +42,9 @@ class BoomerDataset(Dataset):
         return self.len
     
     def __getitem__(self, idx):
+        '''
+        Retrieves fpath from metadata frame, loads and transforms image
+        '''
 
         if torch.is_tensor(idx):
             idx = idx.tolist()
@@ -46,13 +60,16 @@ class BoomerDataset(Dataset):
         elif len(image.shape) == 2:
             image = gray2rgb(image)
         
-        image = self.transform(image)
+        image = self.transform(image).float()
         
         return image, label
 
 
 class BoomerDatasetContainer(BoomerDataset):
-
+    '''
+    Wrapper that specifies all the details for 
+    boomer memes in particular
+    '''
     def __init__(self, is_training=None):
         transform = transforms.Compose([
             transforms.ToTensor(),
@@ -60,7 +77,7 @@ class BoomerDatasetContainer(BoomerDataset):
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
         ])
 
-        meta_frame = MetaData("../data/metadata.pkl").df
+        meta_frame = pd.read_pickle(config.paths["metadata"])
 
         super().__init__(meta_frame, transform, is_training)
 
