@@ -1,11 +1,13 @@
 # boomer humour exhumer
 A PyTorch Image classifier that detects boomer humour.
 
-## Boomer meme:
-![Boomer](./images/boomer.jpg)
+<p float="left" align="middle">
+  <img src="/images/boomer.jpg" width="400" /> 
+  <img src="./images/non_boomer.jpg" width="400" />
+</p>
+A boomer meme (left) with it's distinctive art-style and a generic twitter meme on the right.
 
-## Non boomer meme:
-![NonBoomer](./images/non_boomer.jpg)
+
 
 Achieves ~80% accuracy.
 
