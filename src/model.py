@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import conv_output_shape
 
 class Model(nn.Module):
 
@@ -21,7 +20,7 @@ class Model(nn.Module):
         in_lin1 = 21904 # = 148 ** 2 taken from summary
         out_lin1 = 120
         out_lin2 = 84
-        final_out = 2 # boomer or not boomer
+        final_out = 1 # boomer probability 
 
         super(Model, self).__init__()
 
@@ -44,7 +43,10 @@ class Model(nn.Module):
         self.fc2 = nn.Linear(out_lin1, out_lin2)
 
         # output: boomer or not boomer
-        self.fc3 = nn.Linear(out_lin2, final_out)
+        # self.fc3 = nn.Linear(out_lin2, final_out)
+        self.fc3 = nn.Linear(out_lin2, 2)
+
+        self.sigmoid = nn.Sigmoid()
     
     def forward(self, x):
         '''
@@ -59,6 +61,7 @@ class Model(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+        # return self.sigmoid(x)
 
 if __name__ == "__main__":
     model = Model()
