@@ -2,8 +2,8 @@
 A PyTorch Image classifier that detects boomer humour.
 
 <p float="left" align="middle">
-  <img src="/images/boomer.jpg" width="400" /> 
-  <img src="./images/non_boomer.jpg" width="400" />
+  <img src="/images/boomer.jpg" width="30%" /> 
+  <img src="./images/non_boomer.jpg" width="30%" />
 </p>
 A boomer meme (left) with it's distinctive art-style and a generic twitter meme on the right.
 
