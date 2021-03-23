@@ -38,6 +38,17 @@ class BoomerDataset(Dataset):
 
         self.len = self.meta_frame.shape[0]
     
+    def process_image(self, image):
+        # turn RGBA to RGB
+        if image.shape[-1] == 4:
+            image = rgba2rgb(image)
+        # turn greyscale into RGB
+        elif len(image.shape) == 2:
+            image = gray2rgb(image)
+        
+        return self.transform(image).float()
+
+    
     def __len__(self):
         return self.len
     
@@ -52,15 +63,7 @@ class BoomerDataset(Dataset):
         fpath = self.meta_frame.loc[idx, "fpath"]
         label = self.meta_frame.loc[idx, "is_boomer"].astype("int")
         image = io.imread(fpath)
-
-        # turn RGBA to RGB
-        if image.shape[-1] == 4:
-            image = rgba2rgb(image)
-        # turn greyscale into RGB
-        elif len(image.shape) == 2:
-            image = gray2rgb(image)
-        
-        image = self.transform(image).float()
+        image = self.process_image(image)
         
         return image, label
 
