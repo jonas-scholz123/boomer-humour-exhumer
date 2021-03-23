@@ -25,15 +25,15 @@ class TrainingSuite:
 
                 self.optimiser.zero_grad()
 
-                y_hat = self.model(x.float())
+                y_hat = torch.round(self.model(x.float()))
                 loss = self.loss_fn(y_hat, y)
                 loss.backward()
                 self.optimiser.step()
 
                 running_loss += loss.item()
 
-                if i % 2000 == 0:
-                    print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 2000))
+                if i % 100 == 0:
+                    print('[%d, %5d] loss: %.3f' % (epoch + 1, i + 1, running_loss / 100))
                     running_loss = 0.0
 
     def save_model(self, path):
@@ -78,9 +78,6 @@ class TrainingSuiteBoomer(TrainingSuite):
         loss_fn = nn.CrossEntropyLoss()
 
         super().__init__(model, optimiser, loss_fn, trainloader)
-
-
-
         
 
 if __name__ == "__main__":
