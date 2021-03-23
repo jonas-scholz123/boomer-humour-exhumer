@@ -1,19 +1,41 @@
 import torch
+from torch import nn
 import torchvision
+from tqdm import tqdm
 from torchvision import transforms
-from dataloader import BoomerDatasetContainer
+from sklearn.metrics import confusion_matrix
 
+from dataloader import BoomerDatasetContainer
 from model import Model
 from utils import imshow
+import config
+
 
 class TestSuite:
+    '''
+    Class for evaluating unseen test data and computing performance
+    metrics.
+    '''
 
-    def __init__(self, model, testloader):
+    def __init__(self, model, testloader, metrics):
+        '''
+        PARAMS:
+            pyTorch model model: the model to be evaluated
+            pyTorch dataloader testloader: loads test data in batches
+            list[function]: list of functions that take (ys, y_hats) as
+                arguments and compute a metric.
+        '''
         self.model = model
+        self.model.eval() # eval mode
         self.testloader = testloader
         self.batch_size = testloader.batch_size
+        self.sigmoid = nn.Sigmoid()
+        self.metrics = metrics
     
     def preview_batch(self):
+        '''
+        Plots a batch of images and prints ground truth/prediction
+        '''
         dataiter = iter(self.testloader)
         x, y = dataiter.next()
 
@@ -23,50 +45,46 @@ class TestSuite:
 
         y_hat = self.model(x)
 
-        _, predicted = torch.max(y_hat, 1)
+        # _, predicted = torch.max(y_hat, 1)
+        predicted = torch.round(y_hat)
         print('Predicted: ', ' '.join('%5s' % predicted[j]
                                 for j in range(self.batch_size)))
     
-    def calculate_acccuracy(self):
-        correct = 0
-        total = 0
+    def _get_pairs(self):
+        '''
+        Generic evaluation that simply returns
+        all ys, y_hats for then passing into a metric
+        '''
+        ys = []
+        y_hats = []
         with torch.no_grad():
-            for data in self.testloader:
-                x, y = data
-                y_hat = self.model(x)
-                # predicted = torch.round(y_hat)
-                _, predicted = torch.max(y_hat, 1)
-                print(y, predicted)
-                total += y.size(0)
-                correct += (predicted == y).sum().item()
+            for x, y in tqdm(self.testloader):
+                y_hat = self.sigmoid(self.model(x))
+                ys.append(y)
+                y_hats.append(y_hat)
+        return torch.cat(ys), torch.cat(y_hats).detach()
+    
+    def evaluate(self):
+        '''
+        Evaluates all metrics
 
-        print('Accuracy of the network on the ', len(self.testloader), ' test images: %d %%' % (
-            100 * correct / total))
+        RETURNS:
+            list[tuple("name", metric)] results: all evaluated metrics
+        '''
+        if not self.metrics:
+            return
 
-class TestSuiteCifar(TestSuite):
+        ys, y_hats = self._get_pairs()
 
-    def __init__(self):
+        results = [metric(ys, y_hats) for metric in self.metrics]
+        return results
 
-        batch_size = 4
-        transform = transforms.Compose(
-            [transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-
-        testset = torchvision.datasets.CIFAR10(root='../data', train=False,
-                                            download=True, transform=transform)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                                shuffle=False, num_workers=2)
-
-        classes = ('plane', 'car', 'bird', 'cat',
-                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-        model = Model()
-        model.load_state_dict(torch.load("../saved_models/cifar.pth"))
-
-        super().__init__(model, testloader, classes)
 
 class TestSuiteBoomer(TestSuite):
-
+    '''
+    Wrapper that specifies the parameters
+    of TestSuite
+    '''
     def __init__(self):
 
         transform = None
@@ -74,16 +92,31 @@ class TestSuiteBoomer(TestSuite):
 
         testset = BoomerDatasetContainer(is_training=False)
         testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                        shuffle=True, num_workers=2)
+                                        shuffle=True, num_workers=4)
+
+        metrics = [Metrics.accuracy, Metrics.confusion_matrix]
 
         model = Model()
-        model.load_state_dict(torch.load("../saved_models/boomer.pth"))
+        #TODO: change old model
+        model.load_state_dict(torch.load(config.paths["saved_model"]))
 
-        super().__init__(model, testloader)
+        super().__init__(model, testloader, metrics)
+
+class Metrics:
+    '''
+    All functions must take only ys, y_hats as args
+    '''
+    def accuracy(ys, y_hats):
+        return "accuracy", float(1 - (ys - y_hats).round().abs().sum()/ys.shape[0])
+    
+    def confusion_matrix(ys, y_hats):
+        return "confusion", confusion_matrix(ys, y_hats.round(), normalize="true")
+
 
 if __name__ == "__main__":
     test_suite = TestSuiteBoomer()
-    test_suite.calculate_acccuracy()
+    results = test_suite.evaluate()
+    breakpoint()
     test_suite.preview_batch()
 
 
