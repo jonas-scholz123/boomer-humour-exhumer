@@ -25,4 +25,33 @@ Install requirements.txt using pip:
 pip3 install -r requirements.txt
 ```
 
-Currently needs data read in through dataOrganiser.py, will work on an API to query the model directly with a single image or a batch of images.
+To determine the boomer-ness of an image, naviagte to /src/ and run:
+
+```
+python3 exhume.py /path/to/image
+```
+
+For example,
+
+```
+python3 exhume.py ../images/boomer.jpg
+>>> The image is 98.30783081054688% Boomerish
+```
+
+or 
+
+```
+python3 exhume.py ../images/non_boomer.jpg
+>>> The image is 1.089718222618103% Boomerish
+```
+
+
+## To Do
+
+- [x] Single image exhumation
+- [ ] Exhumation as a microservice for querying
+- [ ] OCR Capability for reading text
+- [ ] Embeddings/RNN for encoding text into classification
+- [ ] Reddit bot that comments the boomerness of a post.
+- [ ] Cloud Hosted
+
