@@ -35,14 +35,14 @@ For example,
 
 ```
 python3 exhume.py ../images/boomer.jpg
->>> The image is 98.30783081054688% Boomerish
+>>> The image is 98.31% Boomerish
 ```
 
 or 
 
 ```
 python3 exhume.py ../images/non_boomer.jpg
->>> The image is 1.089718222618103% Boomerish
+>>> The image is 1.09% Boomerish
 ```
 
 
