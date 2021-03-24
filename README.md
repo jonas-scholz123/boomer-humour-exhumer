@@ -48,7 +48,7 @@ python3 exhume.py ../images/non_boomer.jpg
 
 ## To Do
 
-- [ ] Single image exhumation
+- [x] Single image exhumation
 - [ ] Exhumation as a microservice for querying
 - [ ] OCR Capability for reading text
 - [ ] Embeddings/RNN for encoding text into classification
