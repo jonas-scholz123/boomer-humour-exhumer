@@ -11,4 +11,6 @@ paths = dict(
     saved_model = "../saved_models/boomer.pth",
 
     metadata = "../data/metadata.pkl",
+
+    embeddings = "../embeddings/"
 )
