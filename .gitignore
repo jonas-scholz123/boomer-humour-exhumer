@@ -1,6 +1,8 @@
 # vscode
 .vscode/
 
+gcloud_ocr_key.json
+
 # data
 data/
 
@@ -134,3 +136,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .DS_Store
+._gcloud_ocr_key.json
