@@ -49,8 +49,8 @@ python3 exhume.py ../images/non_boomer.jpg
 ## To Do
 
 - [x] Single image exhumation
-- [ ] Exhumation as a microservice for querying
-- [ ] OCR Capability for reading text
+- [x] Exhumation as a microservice for querying
+- [x] OCR Capability for reading text
 - [ ] Embeddings/RNN for encoding text into classification
 - [ ] Reddit bot that comments the boomerness of a post.
 - [ ] Cloud Hosted
