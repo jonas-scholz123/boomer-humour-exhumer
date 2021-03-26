@@ -137,3 +137,4 @@ dmypy.json
 .pyre/
 .DS_Store
 ._gcloud_ocr_key.json
+src/test_exhume_app.py
