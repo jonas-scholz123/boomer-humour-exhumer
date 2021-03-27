@@ -12,5 +12,7 @@ paths = dict(
 
     metadata = "../data/metadata.pkl",
 
-    embeddings = "../embeddings/"
+    embeddings = "../embeddings/",
+
+    gcloud_credentials = "../gcloud_ocr_key.json"
 )

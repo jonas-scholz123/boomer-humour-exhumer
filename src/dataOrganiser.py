@@ -1,3 +1,4 @@
+# %%
 '''
 Metadata maker
 '''
@@ -11,6 +12,7 @@ from PIL import Image, UnidentifiedImageError
 import config
 from ocr import GCloudOCR, TesseractOCR
 from utils import ConceptNetDict
+from matplotlib.pyplot import imshow, show
 
 
 class MetaData:
@@ -153,6 +155,14 @@ class MetaData:
         '''
         Uses self.ocr to extract text from images
         and saves this text in self.df
+
+        PARAMS:
+            int max_extractions: won't run more extractions than max_extractions,
+                                 to save costs.
+            bool batch: whether or not the batched version of the OCR
+                        engine should be used.
+        RETURNS:
+            int invalids: number of invalid (failed) extractions
         '''
         if not self.ocr:
             print("Error: no OCR engine provided.")
@@ -170,6 +180,8 @@ class MetaData:
         indices = self.df.loc[mask].index[:max_extractions]
 
         if batch:
+            #NOTE: batched doesn't support validation checks (yet)
+            valid_count = max_extractions
             fpaths = self.df.loc[indices, "fpath"]
             annotations = self.ocr.batch_extract(fpaths)
             self.df.loc[indices, "text"] = annotations
@@ -177,15 +189,22 @@ class MetaData:
         else:
             valid_count = 0
             for idx in tqdm(indices):
+
                 annotation = self.ocr.extract_text(self.df.loc[idx, "fpath"])
+                # print("INDEX: ", idx)
+                # imshow(io.imread(self.df.loc[idx, "fpath"]))
+                # show()
+                # print(annotation)
                 nr_extractions += 1
 
                 if self.is_valid_annotation(annotation):
                     valid_count += 1
                     self.df.loc[idx, "text"] = annotation
-        print(f"{100 * valid_count/max_extractions}% valid.")
 
+            print(f"{100 * valid_count/max_extractions}% valid.")
+        
         self.df.loc[indices, "ocr_engine"] = self.ocr.__class__.__name__
+        return max_extractions - valid_count
     
     def print_stats(self):
         print("number normal memes: ", (meta.df["is_boomer"] == False).sum())
@@ -194,45 +213,45 @@ class MetaData:
         if "text" in self.df.columns:
             total_annotated = self.df["text"].notnull().sum()
             print(f"{total_annotated} out of {self.df.shape[0]} entries annotated.")
-
-
-        
+    
+    def sample_annotation(self, idx):
+        fpath = self.df.loc[idx, "fpath"]
+        text = self.df.loc[idx, "text"]
+        engine = self.df.loc[idx, "ocr_engine"]
+        image = io.imread(fpath)
+        imshow(image)
+        print(f"Transcribed by {engine}")
+        print(text)
 
 
 if __name__ == "__main__":
 
     metadata_path = config.paths["metadata"]
-
     boomer_roots = config.paths["boomer_roots"]
-
     non_boomer_roots = config.paths["non_boomer_roots"]
-
-    ocr = TesseractOCR()
-    
-    # annotate with tesseract ocr first
+    batch_size = 100
     meta = MetaData(
         metadata_path,
-        ocr=ocr,
+        ocr=None,
         boomer_roots=boomer_roots,
         non_boomer_roots=non_boomer_roots,
-        correct_word_threshold=0.7
+        correct_word_threshold=None
     )
 
-    meta.annotate_texts(100, batch=False)
-    meta.print_stats()
+    while meta.df["text"].isnull().sum() > 0:
 
-    meta.save_df()
+        # annotate with tesseract ocr first
+        meta.ocr = TesseractOCR()
+        meta.correct_word_threshold=0.7
 
-    # then annotate remaining with Google
-    ocr = GCloudOCR()
+        nr_invalid = meta.annotate_texts(batch_size, batch=False)
+        meta.print_stats()
+        meta.save_df()
 
-    meta = MetaData(
-        metadata_path,
-        ocr=ocr,
-        boomer_roots=boomer_roots,
-        non_boomer_roots=non_boomer_roots,
-        correct_word_threshold=0.0 # can't do better than google ocr, no threshold
-    )
-    
-    # meta.annotate_texts(10, batch=True)
-    meta.save_df()
+        meta.ocr = GCloudOCR()
+        meta.correct_word_threshold=0.0
+
+        # then annotate failed ones with Google
+        meta.annotate_texts(nr_invalid, batch=True)
+        meta.print_stats()
+        meta.save_df()
