@@ -207,7 +207,7 @@ class GCloudOCR:
         operation = client.async_batch_annotate_images(requests=requests, output_config=output_config)
 
         print("Waiting for operation to complete...")
-        response = operation.result(90)
+        response = operation.result()
 
         # The output is written to GCS with the provided output_uri as prefix
         gcs_output_uri = response.output_config.gcs_destination.uri
