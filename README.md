@@ -20,7 +20,26 @@ We scrape a similar number of non-boomer (general purpose) memes from /r/me_irl,
 
 ## How To Run
 
-Install requirements.txt using pip:
+Optional: make a virtual environment and activate it:
+
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install tesseract:
+
+MacOS:
+```
+brew install tesseract
+```
+
+Ubuntu:
+```
+sudo apt-get install tesseract-ocr
+```
+
+Install required python libraries from requirements.txt using pip:
 ```
 pip3 install -r requirements.txt
 ```
