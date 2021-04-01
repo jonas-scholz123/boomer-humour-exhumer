@@ -10,9 +10,11 @@ paths = dict(
 
     saved_model = "../saved_models/boomer.pth",
 
-    metadata = "../data/metadata.pkl",
+    metadata = "../metadata/metadata.pkl",
 
     embeddings = "../embeddings/",
 
-    gcloud_credentials = "../gcloud_ocr_key.json"
+    gcloud_credentials = "../gcloud_ocr_key.json",
+
+    word2id = "../metadata/word2id.pkl"
 )
