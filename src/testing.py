@@ -58,8 +58,8 @@ class TestSuite:
         ys = []
         y_hats = []
         with torch.no_grad():
-            for x, y in tqdm(self.testloader):
-                y_hat = self.sigmoid(self.model(x))
+            for image, text_ids, y in tqdm(self.testloader):
+                y_hat = self.sigmoid(self.model(image))
                 ys.append(y)
                 y_hats.append(y_hat)
         return torch.cat(ys), torch.cat(y_hats).detach()

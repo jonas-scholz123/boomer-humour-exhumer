@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 from skimage import io, transform
 from skimage.color import rgba2rgb, gray2rgb
+from nltk import word_tokenize
 import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
@@ -37,6 +38,9 @@ class BoomerDataset(Dataset):
             self.meta_frame = meta_frame[training_entries].reset_index()
 
         self.len = self.meta_frame.shape[0]
+        with open(self.word2id_path, "rb") as f:
+            self.word2id = pickle.load(f)
+    
     
     def process_image(self, image):
         # turn RGBA to RGB
@@ -62,10 +66,17 @@ class BoomerDataset(Dataset):
         
         fpath = self.meta_frame.loc[idx, "fpath"]
         label = self.meta_frame.loc[idx, "is_boomer"].astype("int")
+        text = self.meta_frame.loc[idx, "text"]
+
+        text_ids = []
+        if text: 
+            text_ids = [self.word2id(tok) for tok in word_tokenize(text)]
+
         image = io.imread(fpath)
         image = self.process_image(image)
+
         
-        return image, label
+        return image, text_ids, label
 
 
 class BoomerDatasetContainer(BoomerDataset):

@@ -41,11 +41,11 @@ class TrainingSuite:
             running_loss = 0.0
 
             for i, data in tqdm(enumerate(self.trainloader)):
-                x, y = data
+                image, text, y = data
 
                 self.optimiser.zero_grad()
 
-                y_hat = self.model(x.float()) # either 0 or 1
+                y_hat = self.model(image.float()) # either 0 or 1
                 predicted = torch.round(y_hat)
                 loss = self.loss_fn(y_hat, y.float())
                 loss.backward()
