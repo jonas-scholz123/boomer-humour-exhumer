@@ -3,8 +3,9 @@
 Metadata maker
 '''
 import pandas as pd
+import pickle
 import os
-import nltk
+from nltk import word_tokenize
 from skimage import io
 from tqdm import tqdm
 from PIL import Image, UnidentifiedImageError
@@ -37,11 +38,18 @@ class MetaData:
         self.ocr = ocr
         self.boomer_roots = boomer_roots
         self.non_boomer_roots = non_boomer_roots
+        self.word2id_path = config.paths["word2id"]
+
+
         self.training_frac = training_frac
         self.embeds = ConceptNetDict()
         self.correct_word_threshold = correct_word_threshold
 
         self.df = self._load_df()
+        self.word2id = self._load_word2id()
+        # in case word2id doesn't exist, we populate from df
+        if not self.word2id:
+            self._populate_word2id()
     
     def _load_df(self):
         '''
@@ -54,11 +62,40 @@ class MetaData:
             print("Building dataframe from scratch")
             self._build_df()
     
-    def save_df(self):
+    def _save_df(self):
         '''
         Saves dataframe 
         '''
         self.df.to_pickle(self.fpath)
+
+    def _populate_word2id(self):
+        "populating word2id!"
+        not_nan = self.df["text"].notnull()
+
+        for text in self.df.loc[not_nan, "text"]:
+            self.add_to_vocab(text)
+
+    def _load_word2id(self):
+        if os.path.exists(self.word2id_path):
+            with open(self.word2id_path, "rb") as f:
+                return pickle.load(f)
+        else:
+            return {}
+    
+    def _save_word2id(self):
+        with open(self.word2id_path, "wb") as f:
+            pickle.dump(self.word2id, f)
+    
+    def save(self):
+        self._save_df()
+        self._save_word2id()
+    
+    def add_to_vocab(self, sentence):
+        tokens = word_tokenize(sentence)
+        for token in tokens:
+            token = token.lower()
+            if token not in self.word2id:
+                self.word2id[token] = len(self.word2id)
     
     def image_is_valid(self, full_path):
         '''
@@ -138,7 +175,7 @@ class MetaData:
     def is_valid_annotation(self, annotation):
 
         valids = 0
-        tokens = nltk.word_tokenize(annotation)
+        tokens = word_tokenize(annotation)
 
         if len(tokens) == 0:
             return False
@@ -148,8 +185,6 @@ class MetaData:
                 valids += 1
         
         return valids/len(tokens) > self.correct_word_threshold
-                
-
     
     def annotate_texts(self, max_extractions, batch=True):
         '''
@@ -191,6 +226,7 @@ class MetaData:
             for idx in tqdm(indices):
 
                 annotation = self.ocr.extract_text(self.df.loc[idx, "fpath"])
+                self.add_to_vocab(annotation)
                 # print("INDEX: ", idx)
                 # imshow(io.imread(self.df.loc[idx, "fpath"]))
                 # show()
@@ -237,6 +273,7 @@ if __name__ == "__main__":
         non_boomer_roots=non_boomer_roots,
         correct_word_threshold=None
     )
+    # %%
 
     while meta.df["text"].isnull().sum() > 0:
 
@@ -246,7 +283,7 @@ if __name__ == "__main__":
 
         nr_invalid = meta.annotate_texts(batch_size, batch=False)
         meta.print_stats()
-        meta.save_df()
+        meta.save()
 
         meta.ocr = GCloudOCR()
         meta.correct_word_threshold=0.0
@@ -254,4 +291,4 @@ if __name__ == "__main__":
         # then annotate failed ones with Google
         meta.annotate_texts(nr_invalid, batch=True)
         meta.print_stats()
-        meta.save_df()
+        meta.save()
