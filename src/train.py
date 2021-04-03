@@ -1,13 +1,16 @@
+import os
 import torch
 from model import Model
 from torch import optim
 from tqdm import tqdm
 from torch import nn
+
 import torchvision
 from torchvision import transforms
 
 import config
-from dataloader import BoomerDatasetContainer
+from dataloader import BoomerDatasetContainer, collate_fn
+
 
 class TrainingSuite:
     '''
@@ -41,11 +44,10 @@ class TrainingSuite:
             running_loss = 0.0
 
             for i, data in tqdm(enumerate(self.trainloader)):
-                image, text, y = data
-
+                image, text, text_lengths, y = data
                 self.optimiser.zero_grad()
 
-                y_hat = self.model(image.float()) # either 0 or 1
+                y_hat = self.model(image.float(), text, text_lengths) # either 0 or 1
                 predicted = torch.round(y_hat)
                 loss = self.loss_fn(y_hat, y.float())
                 loss.backward()
@@ -89,9 +91,10 @@ class TrainingSuiteBoomer(TrainingSuite):
         trainloader = torch.utils.data.DataLoader(trainset,
                                                   batch_size=10,
                                                   shuffle=True,
-                                                  num_workers=6)
+                                                  num_workers=6,
+                                                  collate_fn=self.collate_fn)
 
-        model = Model().float()
+        model = Model()
 
         optimiser = optim.Adam(model.parameters(), lr=0.001)
 
@@ -99,11 +102,15 @@ class TrainingSuiteBoomer(TrainingSuite):
         loss_fn = nn.BCEWithLogitsLoss()
 
         super().__init__(model, optimiser, loss_fn, trainloader)
+    
         
 
 if __name__ == "__main__":
     MODEL_PATH = config.paths["saved_model"] 
     training_suite = TrainingSuiteBoomer()
-    training_suite.load_model(MODEL_PATH)
+
+    if os.path.exists(MODEL_PATH):
+        training_suite.load_model(MODEL_PATH)
+
     training_suite.train(n_epochs=1)
     training_suite.save_model(MODEL_PATH)

@@ -1,3 +1,4 @@
+# %%
 import torch
 from torch import nn
 import torchvision
@@ -5,7 +6,7 @@ from tqdm import tqdm
 from torchvision import transforms
 from sklearn.metrics import confusion_matrix
 
-from dataloader import BoomerDatasetContainer
+from dataloader import BoomerDatasetContainer, collate_fn
 from model import Model
 from utils import imshow
 import config
@@ -37,15 +38,14 @@ class TestSuite:
         Plots a batch of images and prints ground truth/prediction
         '''
         dataiter = iter(self.testloader)
-        x, y = dataiter.next()
+        x_image, x_text, text_lengths, y = dataiter.next()
 
         #print images
-        imshow(torchvision.utils.make_grid(x))
+        imshow(torchvision.utils.make_grid(x_image))
         print('GroundTruth: ', ' '.join('%5s' % y[j] for j in range(self.batch_size)))
 
-        y_hat = self.model(x)
+        y_hat = self.sigmoid(self.model(x_image, x_text, text_lengths))
 
-        # _, predicted = torch.max(y_hat, 1)
         predicted = torch.round(y_hat)
         print('Predicted: ', ' '.join('%5s' % predicted[j]
                                 for j in range(self.batch_size)))
@@ -58,8 +58,8 @@ class TestSuite:
         ys = []
         y_hats = []
         with torch.no_grad():
-            for image, text_ids, y in tqdm(self.testloader):
-                y_hat = self.sigmoid(self.model(image))
+            for image, text_ids, text_lengths, y in tqdm(self.testloader):
+                y_hat = self.sigmoid(self.model(image, text_ids, text_lengths))
                 ys.append(y)
                 y_hats.append(y_hat)
         return torch.cat(ys), torch.cat(y_hats).detach()
@@ -92,7 +92,7 @@ class TestSuiteBoomer(TestSuite):
 
         testset = BoomerDatasetContainer(is_training=False)
         testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                        shuffle=True, num_workers=4)
+                                        shuffle=True, num_workers=4, collate_fn=collate_fn)
 
         metrics = [Metrics.accuracy, Metrics.confusion_matrix]
 
@@ -115,9 +115,10 @@ class Metrics:
 
 if __name__ == "__main__":
     test_suite = TestSuiteBoomer()
-    results = test_suite.evaluate()
-    breakpoint()
     test_suite.preview_batch()
+    results = test_suite.evaluate()
 
 
 
+
+# %%

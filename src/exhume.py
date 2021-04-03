@@ -2,31 +2,52 @@ import sys
 import os
 from skimage import io
 import torch
+import pickle
+from nltk import word_tokenize
 
 from dataloader import BoomerDatasetContainer
+from ocr import GCloudOCR, TesseractOCR
 from model import Model
 import config
 
+from testing import TestSuiteBoomer
+
 class Exhumer:
 
-    def __init__(self, model, image_processor):
+    def __init__(self, model, image_processor, base_ocr, good_ocr):
         self.model = model
         self.image_processor = image_processor
 
         # for mapping nr to probability
         self.sigmoid = torch.nn.Sigmoid()
+
+        self.base_ocr = base_ocr
+        self.good_ocr = good_ocr
+
+        with open(config.paths["word2id"], "rb") as f:
+            self.word2id = pickle.load(f)
     
     def exhume(self, im_path):
+        #key issue: all annotated memes so far are boomer memes,
+        # therefore text heavily (wrongly) increases boomer probability
         
         if not os.path.exists(im_path):
             print("Invalid Path")
             return
         image = io.imread(im_path)
-
         image = self.image_processor.process_image(image)
-        image = image.unsqueeze(0)
-        return float(self.sigmoid(self.model(image)).flatten()[0])
 
+        text = self.base_ocr.extract_text(im_path).lower()
+        if not self.base_ocr.is_valid_annotation(text):
+            text = self.good_ocr.extract_text(im_path).lower()
+
+        text_ids = [self.word2id[tok] for tok in word_tokenize(text) if tok in self.word2id]
+
+        x_image = image.unsqueeze(0)
+        x_text = torch.IntTensor(text_ids).unsqueeze(0)
+        length = torch.tensor(len(text_ids)).unsqueeze(0)
+
+        return float(self.sigmoid(self.model(x_image, x_text, length)).flatten()[0])
 
 class ExhumerContainer(Exhumer):
 
@@ -37,7 +58,10 @@ class ExhumerContainer(Exhumer):
 
         image_processor = BoomerDatasetContainer()
 
-        super().__init__(model, image_processor)
+        base_ocr = TesseractOCR()
+        good_ocr = GCloudOCR()
+
+        super().__init__(model, image_processor, base_ocr, good_ocr)
 
 if __name__ == "__main__":
 
