@@ -5,6 +5,7 @@ gcloud_ocr_key.json
 
 # data
 data/
+embeddings/embedding_matrix.pkl
 
 ._*
 
