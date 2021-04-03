@@ -16,7 +16,7 @@ paths = dict(
 
     gcloud_credentials = "../gcloud_ocr_key.json",
 
-    word2id = "../metadata/word2id.pkl"
+    word2id = "../metadata/word2id.pkl",
 
     embedding_matrix = "../embeddings/embedding_matrix.pkl"
 )

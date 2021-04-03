@@ -7,15 +7,45 @@ import io
 import os
 import json
 from tqdm import tqdm
+from nltk import word_tokenize
 
+from utils import ConceptNetDict
 import config
 
+class OCR:
+    def __init__(self):
+        self.embeds = ConceptNetDict()
 
-class TesseractOCR:
+    def is_valid_annotation(self, annotation):
+        '''
+        If at least self.correct_word_threshold of the annotation
+        are recognised as real words (i.e. in embeddings), it is 
+        considered valid
+        '''
+        if self.correct_word_threshold == 0:
+            return True
+
+        valids = 0
+        tokens = word_tokenize(annotation)
+
+        if len(tokens) == 0:
+            return False
+
+        for t in tokens:
+            if t.lower() in self.embeds:
+                valids += 1
+        
+        return valids/len(tokens) > self.correct_word_threshold
+
+class TesseractOCR(OCR):
     '''
     Uses cv2 to preprocess images and tesseract OCR to extract text.
     Is free but not as good as Google cloud.
     '''
+
+    def __init__(self):
+        self.correct_word_threshold = 0.7
+        super().__init__()
 
     def process_image(self, image):
         '''
@@ -67,13 +97,17 @@ class TesseractOCR:
 
         return text
 
-class GCloudOCR:
+class GCloudOCR(OCR):
     '''
     Google Cloud OCR interface. Costs money and needs authenticated account etc.
     '''
 
     def __init__(self):
         
+        super().__init__()
+        # don't have better ocr, so no threshold
+        self.correct_word_threshold = 0.0
+
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = config.paths["gcloud_credentials"]
         #for annotations
         self.client = vision.ImageAnnotatorClient()

@@ -1,7 +1,3 @@
-# %%
-'''
-Metadata maker
-'''
 import pandas as pd
 import pickle
 import os
@@ -48,8 +44,7 @@ class MetaData:
         self.df = self._load_df()
         self.word2id = self._load_word2id()
         # in case word2id doesn't exist, we populate from df
-        if not self.word2id:
-            self._populate_word2id()
+        self._populate_word2id()
     
     def _load_df(self):
         '''
@@ -69,13 +64,20 @@ class MetaData:
         self.df.to_pickle(self.fpath)
 
     def _populate_word2id(self):
-        "populating word2id!"
+        '''
+        Iterate over dataframe and add all words in all texts to vocab
+        '''
+        print("populating word2id")
         not_nan = self.df["text"].notnull()
+        self.word2id[""] = 0 #padding, no meaning.
 
         for text in self.df.loc[not_nan, "text"]:
             self.add_to_vocab(text)
 
     def _load_word2id(self):
+        '''
+        load pickled word2id
+        '''
         if os.path.exists(self.word2id_path):
             with open(self.word2id_path, "rb") as f:
                 return pickle.load(f)
@@ -83,6 +85,9 @@ class MetaData:
             return {}
     
     def _save_word2id(self):
+        '''
+        pickle word2id
+        '''
         with open(self.word2id_path, "wb") as f:
             pickle.dump(self.word2id, f)
     
@@ -91,9 +96,11 @@ class MetaData:
         self._save_word2id()
     
     def add_to_vocab(self, sentence):
-        tokens = word_tokenize(sentence)
+        '''
+        Tokenise sentence, add all tokens to word2id
+        '''
+        tokens = word_tokenize(sentence.lower())
         for token in tokens:
-            token = token.lower()
             if token not in self.word2id:
                 self.word2id[token] = len(self.word2id)
     
@@ -172,19 +179,6 @@ class MetaData:
 
         return self._make_df(full_paths, is_boomers)
     
-    def is_valid_annotation(self, annotation):
-
-        valids = 0
-        tokens = word_tokenize(annotation)
-
-        if len(tokens) == 0:
-            return False
-
-        for t in tokens:
-            if t.lower() in self.embeds:
-                valids += 1
-        
-        return valids/len(tokens) > self.correct_word_threshold
     
     def annotate_texts(self, max_extractions, batch=True):
         '''
@@ -221,6 +215,9 @@ class MetaData:
             annotations = self.ocr.batch_extract(fpaths)
             self.df.loc[indices, "text"] = annotations
 
+            for annotation in annotations:
+                self.add_to_vocab(annotation)
+
         else:
             valid_count = 0
             for idx in tqdm(indices):
@@ -233,7 +230,7 @@ class MetaData:
                 # print(annotation)
                 nr_extractions += 1
 
-                if self.is_valid_annotation(annotation):
+                if self.ocr.is_valid_annotation(annotation):
                     valid_count += 1
                     self.df.loc[idx, "text"] = annotation
 
@@ -275,20 +272,24 @@ if __name__ == "__main__":
     )
     # %%
 
-    while meta.df["text"].isnull().sum() > 0:
+    try:
+        while meta.df["text"].isnull().sum() > 0:
 
-        # annotate with tesseract ocr first
-        meta.ocr = TesseractOCR()
-        meta.correct_word_threshold=0.7
+            # annotate with tesseract ocr first
+            meta.ocr = TesseractOCR()
+            meta.correct_word_threshold=0.7
 
-        nr_invalid = meta.annotate_texts(batch_size, batch=False)
-        meta.print_stats()
-        meta.save()
+            nr_invalid = meta.annotate_texts(batch_size, batch=False)
+            meta.print_stats()
+            meta.save()
 
-        meta.ocr = GCloudOCR()
-        meta.correct_word_threshold=0.0
+            meta.ocr = GCloudOCR()
+            meta.correct_word_threshold=0.0
 
-        # then annotate failed ones with Google
-        meta.annotate_texts(nr_invalid, batch=True)
-        meta.print_stats()
+            # then annotate failed ones with Google
+            meta.annotate_texts(nr_invalid, batch=True)
+            meta.print_stats()
+            meta.save()
+    except:
+        print("Process cancelled, wrapping up...")
         meta.save()
