@@ -70,8 +70,9 @@ python3 exhume.py ../images/non_boomer.jpg
 - [x] Single image exhumation
 - [x] Exhumation as a microservice for querying
 - [x] OCR Capability for reading text
+- [x] Embeddings/RNN for encoding text into classification
+- [ ] Finish annotating all images 
 - [ ] Filter false flag boomer memes
-- [ ] Embeddings/RNN for encoding text into classification
 - [ ] Reddit bot that comments the boomerness of a post.
 - [ ] Cloud Hosted
 
