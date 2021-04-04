@@ -117,7 +117,7 @@ if __name__ == "__main__":
     test_suite = TestSuiteBoomer()
     test_suite.preview_batch()
     results = test_suite.evaluate()
-
+    print(results)
 
 
 
