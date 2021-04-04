@@ -124,11 +124,3 @@ class BoomerDatasetContainer(BoomerDataset):
         meta_frame = pd.read_pickle(config.paths["metadata"])
 
         super().__init__(meta_frame, transform, is_training)
-
-if __name__ == "__main__":
-    boomer_data = BoomerDatasetContainer(is_training=True)
-
-    for i in range(len(boomer_data)):
-        if i % 50 == 0:
-            print(i)
-        boomer_data[i]

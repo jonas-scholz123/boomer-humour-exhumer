@@ -246,35 +246,3 @@ class GCloudOCR(OCR):
         # The output is written to GCS with the provided output_uri as prefix
         gcs_output_uri = response.output_config.gcs_destination.uri
         print("Output written to GCS with prefix: {}".format(gcs_output_uri))
-
-
-
-
-if __name__ == "__main__":
-    FPATH = "../images/non_boomer.jpg"
-    ROOT = "../data/boomerhumour"
-
-
-    gocr = GCloudOCR()
-    gocr.sample_async_batch_annotate_images(5)
-    # fnames, annots = gocr.read_bucket_annotations("annotations/output-1-to-95.json")
-
-    # gocr.sample_async_batch_annotate_images()
-    # ocr = TesseractOCR()
-
-    #for fname in os.listdir(ROOT)[105:107]:
-        #fpath = os.path.join(ROOT, fname)
-        #text = ocr.extract_text(fpath)
-        # gtext = gocr.extract_text(fpath)
-        #print("TESSERACT:")
-        #print(text.replace("\n", " "))
-        #print("GOOGLE:")
-        #print(gtext.replace("\n", " "))
-    
-    # fnames = os.listdir(ROOT)[0:3]
-    # fpaths = [os.path.join(ROOT, fname) for fname in fnames]
-
-    # annotations = gocr.batch_extract(fpaths)
-
-    # responses = gocr.batch_extract(fpaths)
-    # breakpoint()
