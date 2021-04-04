@@ -44,6 +44,7 @@ class TrainingSuite:
             running_loss = 0.0
 
             for i, data in tqdm(enumerate(self.trainloader)):
+
                 image, text, text_lengths, y = data
                 self.optimiser.zero_grad()
 
@@ -67,6 +68,7 @@ class TrainingSuite:
             path: filepath ending in .pth where model is saved
         '''
         self.model.load_state_dict(torch.load(path))
+
 
     def save_model(self, path):
         '''
@@ -92,9 +94,9 @@ class TrainingSuiteBoomer(TrainingSuite):
                                                   batch_size=10,
                                                   shuffle=True,
                                                   num_workers=6,
-                                                  collate_fn=self.collate_fn)
+                                                  collate_fn=collate_fn)
 
-        model = Model()
+        model = Model(rebuild_embeddings=True)
 
         optimiser = optim.Adam(model.parameters(), lr=0.001)
 

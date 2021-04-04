@@ -11,6 +11,9 @@ from utils import ConceptNetDict
 
 
 class CNN(nn.Module):
+    '''
+    CNN module processes images. Output is fed into main model.
+    '''
     def __init__(self):
         # TODO: pass hyperparameters
 
@@ -60,13 +63,19 @@ class CNN(nn.Module):
         return F.relu(self.fc1(x))
 
 class RNN(nn.Module):
+    '''
+    RNN using embeddings to encode wordids to vectors,
+    then uses a GRU layer to compute outputs of the
+    sentence. This is used for incorporating text in the
+    model.
+    '''
 
-    def __init__(self):
+    def __init__(self, rebuild_embeddings=False):
         self.embedding_matrix_path = config.paths["embedding_matrix"]
         self.embed_dict = ConceptNetDict()
         self.embed_dim = 300
         self.word2id = self._load_word2id()
-        embedding_matrix = self._load_embedding_matrix()
+        embedding_matrix = self._load_embedding_matrix(rebuild_embeddings)
 
         super().__init__()
 
@@ -81,14 +90,15 @@ class RNN(nn.Module):
         with open(path, "rb") as f:
             return pickle.load(f)
     
-    def _load_embedding_matrix(self):
-        if os.path.exists(self.embedding_matrix_path):
+    def _load_embedding_matrix(self, rebuild=False):
+        if os.path.exists(self.embedding_matrix_path) and not rebuild:
             with open(self.embedding_matrix_path, "rb") as f:
                 return pickle.load(f)
         else:
             return self._make_embedding_matrix()
     
     def _make_embedding_matrix(self):
+        print("making embedding matrix...")
         embedding_matrix = np.zeros((len(self.word2id), self.embed_dim))
 
         for word, idx in self.word2id.items():
@@ -98,7 +108,7 @@ class RNN(nn.Module):
         embedding_matrix = torch.FloatTensor(embedding_matrix)
         with open(self.embedding_matrix_path, "wb") as f:
             pickle.dump(embedding_matrix, f)
-
+        print("done")
         return embedding_matrix
     
     def forward(self, text_data, text_lengths):
@@ -115,9 +125,7 @@ class RNN(nn.Module):
 
 class Model(nn.Module):
 
-    def __init__(self):
-        # TODO: pass hyperparameters
-        # TODO: pass embeddings
+    def __init__(self, rebuild_embeddings=False):
 
         #cnn params
         kernel_size = 5
@@ -135,7 +143,7 @@ class Model(nn.Module):
         final_out = 1 # boomer probability 
 
         super(Model, self).__init__()
-        self.rnn = RNN()
+        self.rnn = RNN(rebuild_embeddings=rebuild_embeddings)
         self.cnn = CNN()
 
         # convolutional layers encode pixels into image features 
@@ -176,21 +184,3 @@ class Model(nn.Module):
         h = F.relu(self.fc2(h))
         h = self.fc3(h)
         return h.view(-1)
-
-if __name__ == "__main__":
-    model = Model()
-    print(model)
-
-    from dataloader import BoomerDatasetContainer
-    dataset = BoomerDatasetContainer(is_training=True)
-
-    trainloader = torch.utils.data.DataLoader(dataset,
-                                                batch_size=4,
-                                                shuffle=True,
-                                                num_workers=2)
-
-    iterator = iter(trainloader)
-    output = model(iterator.next()[0])
-    # test_images = torch.rand(25, 3, 32, 32) # 25 images with 3 channels of 32*32 pixels
-    # output = model(test_images)
-
