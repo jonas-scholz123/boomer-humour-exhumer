@@ -62,6 +62,8 @@ class MetaData:
         Saves dataframe 
         '''
         self.df.to_pickle(self.fpath)
+        self.df.to_csv(self.fpath[:-3] + "csv")
+        print("saved metadata")
 
     def _populate_word2id(self):
         '''
@@ -293,3 +295,5 @@ if __name__ == "__main__":
     except:
         print("Process cancelled, wrapping up...")
         meta.save()
+    
+    meta.save()
