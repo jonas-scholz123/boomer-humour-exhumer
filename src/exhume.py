@@ -14,15 +14,14 @@ from testing import TestSuiteBoomer
 
 class Exhumer:
 
-    def __init__(self, model, image_processor, base_ocr, good_ocr):
+    def __init__(self, model, image_processor, ocr_engines):
         self.model = model
         self.image_processor = image_processor
 
         # for mapping nr to probability
         self.sigmoid = torch.nn.Sigmoid()
 
-        self.base_ocr = base_ocr
-        self.good_ocr = good_ocr
+        self.ocr_engines = ocr_engines
 
         with open(config.paths["word2id"], "rb") as f:
             self.word2id = pickle.load(f)
@@ -37,9 +36,10 @@ class Exhumer:
         image = io.imread(im_path)
         image = self.image_processor.process_image(image)
 
-        text = self.base_ocr.extract_text(im_path).lower()
-        if not self.base_ocr.is_valid_annotation(text):
-            text = self.good_ocr.extract_text(im_path).lower()
+        for engine in self.ocr_engines:
+            text = engine.extract_text(im_path).lower()
+            if engine.is_valid_annotation(text):
+                break
 
         text_ids = [self.word2id[tok] for tok in word_tokenize(text) if tok in self.word2id]
 
@@ -58,10 +58,13 @@ class ExhumerContainer(Exhumer):
 
         image_processor = BoomerDatasetContainer()
 
-        base_ocr = TesseractOCR()
-        good_ocr = GCloudOCR()
+        # sorted from first used to last used
+        ocr_engines = [TesseractOCR(), GCloudOCR()]
+        ocr_engines = [engine for engine in ocr_engines if engine.valid]
+        if len(ocr_engines) == 0:
+            raise Exception('No ocr engines are valid')
 
-        super().__init__(model, image_processor, base_ocr, good_ocr)
+        super().__init__(model, image_processor, ocr_engines)
 
 if __name__ == "__main__":
 

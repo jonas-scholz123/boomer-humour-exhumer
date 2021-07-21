@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from google.cloud import vision_v1 as vision
 from google.cloud import storage
+from google.auth.exceptions import DefaultCredentialsError
 import io
 import os
 import json
@@ -15,6 +16,7 @@ import config
 class OCR:
     def __init__(self):
         self.embeds = ConceptNetDict()
+        self.valid = False
 
     def is_valid_annotation(self, annotation):
         '''
@@ -46,6 +48,7 @@ class TesseractOCR(OCR):
     def __init__(self):
         self.correct_word_threshold = 0.7
         super().__init__()
+        self.valid = True
 
     def process_image(self, image):
         '''
@@ -110,7 +113,11 @@ class GCloudOCR(OCR):
 
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = config.paths["gcloud_credentials"]
         #for annotations
-        self.client = vision.ImageAnnotatorClient()
+        try:
+            self.client = vision.ImageAnnotatorClient()
+        except DefaultCredentialsError:
+            print("Google Cloud OCR is not configured correctly. Using TesseractOCR only.")
+            return
 
         #for accessing bucket
         self.storage_client = storage.Client() 
@@ -120,6 +127,7 @@ class GCloudOCR(OCR):
         self.image_dir = "to_annotate/"
         self.annotations_dir = "annotations/"
         self.bucket_annotations_path = "gs://meme_bucket/annotations/"
+        self.valid = True
 
     def extract_text(self, path):
         '''
