@@ -143,5 +143,4 @@ dmypy.json
 src/test_exhume_app.py
 src/dataOrganiser.py
 .gitignore
-metadata/word2id.pkl
 metadata/metadata copy.pkl
