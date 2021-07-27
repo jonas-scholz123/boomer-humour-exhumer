@@ -1,16 +1,12 @@
 import os
-from flask import Flask, flash, request, redirect, url_for
+from flask import Flask, flash, request, redirect, url_for, jsonify
 # from flask import Flask, request
 from werkzeug.utils import secure_filename
 
 from exhume import ExhumerContainer
 
-# app = Flask(__name__)
-# 
-
-
 UPLOAD_FOLDER = '../data/user_uploads/'
-ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 
 base_html =  '''
@@ -38,23 +34,29 @@ def exhume_image_at_path():
     return str(exhumer.exhume(im_path))
 
 @app.route('/api/exhume', methods=['POST'])
-def upload_file():
-        # check if the post request has the file part
+def exhume_image():
         if 'image' not in request.files:
-            flash('No image part')
-            return redirect(request.url)
+            # 415 => Unsupported Media Type
+            return jsonify({"error": "no image found"}), 415
+
         file = request.files['image']
         # if user does not select file, browser also
         # submit an empty part without filename
+
         if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
+            return jsonify({"error": "no filename"}), 415
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             fpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(fpath)
-            
-            prob = round(exhumer.exhume(fpath) * 100, 2)
+            prob, engine, text = exhumer.exhume_with_meta(fpath)
+            prob = round(prob * 100, 2)
+            return jsonify({
+                'boomerness': prob,
+                'ocr_engine': engine.__class__.__name__,
+                'text': text.replace('\n', " "),
+                }), 200
 
-            boomer_string = f"The image you just uploaded exhudes {str(prob)} % boomer energy."
-            return boomer_string
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True)

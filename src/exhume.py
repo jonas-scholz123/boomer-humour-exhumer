@@ -27,27 +27,33 @@ class Exhumer:
             self.word2id = pickle.load(f)
     
     def exhume(self, im_path):
-        #key issue: all annotated memes so far are boomer memes,
-        # therefore text heavily (wrongly) increases boomer probability
-        
+        '''
+            return_data: bool: whether or not to also return text, engine title etc
+        '''
+        prob, _, _ = self.exhume_with_meta(im_path)
+        return prob
+    
+    def exhume_with_meta(self, im_path):
         if not os.path.exists(im_path):
             print("Invalid Path")
             return
         image = io.imread(im_path)
         image = self.image_processor.process_image(image)
-
+        
         for engine in self.ocr_engines:
             text = engine.extract_text(im_path).lower()
             if engine.is_valid_annotation(text):
                 break
 
+        used_engine = engine
         text_ids = [self.word2id[tok] for tok in word_tokenize(text) if tok in self.word2id]
 
         x_image = image.unsqueeze(0)
         x_text = torch.IntTensor(text_ids).unsqueeze(0)
         length = torch.tensor(len(text_ids)).unsqueeze(0)
-
-        return float(self.sigmoid(self.model(x_image, x_text, length)).flatten()[0])
+        prob = float(self.sigmoid(self.model(x_image, x_text, length)).flatten()[0])
+        
+        return prob, used_engine, text
 
 class ExhumerContainer(Exhumer):
 

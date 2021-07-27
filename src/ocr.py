@@ -8,7 +8,7 @@ import io
 import os
 import json
 from tqdm import tqdm
-from nltk import word_tokenize
+import nltk
 
 from utils import ConceptNetDict
 import config
@@ -17,6 +17,13 @@ class OCR:
     def __init__(self):
         self.embeds = ConceptNetDict()
         self.valid = False
+        self.ensure_tokeniser_exists()
+    
+    def ensure_tokeniser_exists(self):
+        try:
+            nltk.data.find('tokenizers/punkt')
+        except LookupError:
+            nltk.download('punkt')
 
     def is_valid_annotation(self, annotation):
         '''
@@ -28,7 +35,7 @@ class OCR:
             return True
 
         valids = 0
-        tokens = word_tokenize(annotation)
+        tokens = nltk.word_tokenize(annotation)
 
         if len(tokens) == 0:
             return False
