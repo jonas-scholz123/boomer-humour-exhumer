@@ -68,7 +68,7 @@ six==1.15.0
 tables==3.6.1
 threadpoolctl==2.1.0
 tifffile==2021.3.17
-torch==1.8.0
+torch==1.8.1
 torchvision==0.9.1
 tornado==6.1
 tqdm==4.59.0

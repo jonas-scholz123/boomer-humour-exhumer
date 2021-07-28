@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "/Users/jonas/Documents/programming/boomer-humour-exhumer/venv/bin/python3.9",
+    "python.formatting.provider": "black"
+}
