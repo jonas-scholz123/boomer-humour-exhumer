@@ -34,7 +34,6 @@ class CNN(nn.Module):
 
         # convolutional layers encode pixels into image features 
         # 3 in channels, 6 out channels, kernel_size=5
-        self.conv1 = nn.Conv2d(in_channels, out_channels_1, kernel_size)
         # 6 in channels, 16 out channels, kernel_size=5
         self.conv2 = nn.Conv2d(out_channels_1, out_channels_2, kernel_size)
 
@@ -113,6 +112,11 @@ class RNN(nn.Module):
     
     def forward(self, text_data, text_lengths):
 
+        if len(text_data[0]) == 0:
+            print("No text detected. Any possible text is not taken into account.")
+            # 256 = final number of outputs
+            return torch.zeros(1, 256)
+
         x = self.embed_layer(text_data)
         x = pack_padded_sequence(x, text_lengths,
                                  batch_first=True, enforce_sorted=False)
@@ -120,6 +124,7 @@ class RNN(nn.Module):
         #NOTE: last output not 100% sure is really the last output
         sequence_outputs, last_output = self.gru(x)
         # x, output_lengths = pad_packed_sequence(x, batch_first=True)
+        a = last_output.view(last_output.shape[1:])
         return last_output.view(last_output.shape[1:]) # flatten first dim
 
 
@@ -159,7 +164,7 @@ class Model(nn.Module):
         self.flat = nn.Flatten()
 
         # fully connected layers make the actual classification
-        # 148 taken from summary, as there exists no utility
+        # 376 taken from summary, as there exists no utility
         # function for calculating this magic number
         self.fc1 = nn.Linear(in_lin1, out_lin1)
         self.fc2 = nn.Linear(out_lin1, out_lin2)
