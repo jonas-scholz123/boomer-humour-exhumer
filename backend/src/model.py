@@ -34,6 +34,7 @@ class CNN(nn.Module):
 
         # convolutional layers encode pixels into image features 
         # 3 in channels, 6 out channels, kernel_size=5
+        self.conv1 = nn.Conv2d(in_channels, out_channels_1, kernel_size)
         # 6 in channels, 16 out channels, kernel_size=5
         self.conv2 = nn.Conv2d(out_channels_1, out_channels_2, kernel_size)
 
