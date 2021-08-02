@@ -3,12 +3,17 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 
+
 const ImageUploadCard = () => {
   const [image, setImage] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [boomerness, setBoomerness] = useState(null)
 
   const onImageChange = event => {
     if (event.target.files && event.target.files[0]) {
       setImage(event.target.files[0])
+      setBoomerness(null)
     }
   };
 
@@ -37,32 +42,65 @@ const ImageUploadCard = () => {
     )
   }
 
+  const BoomerText = () => {
+    return (
+      <div>
+        <p class="text-3xl text-green-300 font-semibold">The image is {boomerness}% boomerish.</p>
+      </div>
+    )
+  }
+
   const Exhume = () => {
     const data = new FormData();
 
     data.append('image', image);
     data.append('filename', "test");
-
+    setLoading(true)
     fetch('http://localhost:5000/api/exhume', {
       method: "POST",
       body: data,
-    });
+    })
+    .then( response => response.json())
+    .then( data => {
+      console.log(data)
+      setBoomerness(data.boomerness)
+      setLoading(false)
+    })
+    .catch( error => {
+      console.log(error)
+      setError(error)
+    })
 
   }
 
   const ExhumeButton = () => {
+    if (boomerness === null){
+      return (
+        <div class="flex justify-center items-center w-full py-6">
+          <button class="rounded-md bg-gray-800 h-12 w-full border-green-300 hover:bg-green-300 text-green-300 font-semibold hover:text-gray-800 py-2 px-4 border hover:border-transparent rounded" onClick={() => Exhume()}>
+            Exhume
+          </button>
+        </div>
+      )
+    }
     return (
-      <div class="flex justify-center items-center w-full py-6">
-        <button class="rounded-md bg-gray-800 h-12 w-full border-green-300 hover:bg-green-300 text-green-300 font-semibold hover:text-gray-800 py-2 px-4 border hover:border-transparent rounded" onClick={() => Exhume()}>
-          Exhume
-        </button>
+      <div className="relative py-6">
+        <div className="overflow-hidden h-12 mb-4 text-xs flex rounded border border-green-300">
+          <div style={{ width: `${boomerness}%`, transition: "width 2s" }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-300 transition-width transition-500 ease"></div>
+        </div>
       </div>
+      /*
+      <div class="relative pt-1">
+        <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-pink-200">
+          <div style="width:30%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-pink-500"></div>
+        </div>
+      </div> */
     )
   }
 
 
   return (
-    <div class="flex justify-center bg-gray-800 h-screen">
+    <div class="flex justify-center bg-gray-800 h-screen overflow-hidden">
       <div class="m-6 h-full">
         <div class="p-6 h-full">
           <h1 class="text-5xl font-bold text-green-400 py-3">
@@ -98,6 +136,7 @@ const ImageUploadCard = () => {
             </label>
 
             {image !== null && <ExhumeButton />}
+            {boomerness !== null && <BoomerText/>}
 
           </div>
         </div>
