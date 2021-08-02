@@ -7,11 +7,8 @@ const ImageUploadCard = () => {
   const [image, setImage] = useState(null);
 
   const onImageChange = event => {
-    console.log("event: ", event)
-
     if (event.target.files && event.target.files[0]) {
-      let img = event.target.files[0];
-      setImage(URL.createObjectURL(img))
+      setImage(event.target.files[0])
     }
   };
 
@@ -35,10 +32,34 @@ const ImageUploadCard = () => {
           </svg>
           <p className="text-2xl font-semibold">Replace Image</p>
         </div>
-        <img src={image} class="h-full w-full absolute rounded-lg border inset-0 border-green-300 group-hover:filter group-hover:grayscale group-hover:blur-md group-hover:brightness-90"/>
+        <img src={URL.createObjectURL(image)} class="h-full w-full absolute rounded-lg border inset-0 border-green-300 group-hover:filter group-hover:grayscale group-hover:blur-sm group-hover:brightness-90"/>
       </div>
     )
   }
+
+  const Exhume = () => {
+    const data = new FormData();
+
+    data.append('image', image);
+    data.append('filename', "test");
+
+    fetch('http://localhost:5000/api/exhume', {
+      method: "POST",
+      body: data,
+    });
+
+  }
+
+  const ExhumeButton = () => {
+    return (
+      <div class="flex justify-center items-center w-full py-6">
+        <button class="rounded-md bg-gray-800 h-12 w-full border-green-300 hover:bg-green-300 text-green-300 font-semibold hover:text-gray-800 py-2 px-4 border hover:border-transparent rounded" onClick={() => Exhume()}>
+          Exhume
+        </button>
+      </div>
+    )
+  }
+
 
   return (
     <div class="flex justify-center bg-gray-800 h-screen">
@@ -54,6 +75,7 @@ const ImageUploadCard = () => {
 
           <div class="h-full">
             <div class="invisible">
+              <form encType="multipart/form-data">
               <input
                 type="file"
                 name="myImage"
@@ -61,6 +83,7 @@ const ImageUploadCard = () => {
                 onChange={event => onImageChange(event)}
               >
               </input>
+              </form>
 
 
             </div>
@@ -73,6 +96,8 @@ const ImageUploadCard = () => {
               {image !== null && <UploadedImage/>}
 
             </label>
+
+            {image !== null && <ExhumeButton />}
 
           </div>
         </div>
