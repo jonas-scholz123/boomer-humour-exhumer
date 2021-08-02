@@ -66,5 +66,3 @@ def exhume_image():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
-
-flask_cors.CORS(app, expose_headers='Authorization')
