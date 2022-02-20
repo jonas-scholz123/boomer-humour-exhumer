@@ -56,7 +56,7 @@ const ImageUploadCard = () => {
     data.append('image', image);
     data.append('filename', "test");
     setLoading(true)
-    fetch('http://localhost:5000/api/exhume', {
+    fetch('http://localhost:4000/api/exhume', {
       method: "POST",
       body: data,
     })
