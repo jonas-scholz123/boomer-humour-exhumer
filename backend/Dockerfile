@@ -6,6 +6,10 @@ COPY requirements.txt /app/requirements.txt
 
 RUN pip install -r app/requirements.txt
 
+# For some reason numpy breaks sometimes?
+RUN pip install --upgrade numpy
+
+
 WORKDIR /app/src
 
 COPY . /app
