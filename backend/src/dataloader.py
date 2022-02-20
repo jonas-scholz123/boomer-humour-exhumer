@@ -13,7 +13,6 @@ from torch.utils.data import Dataset, DataLoader
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 from torchvision import transforms, utils
 
-from dataOrganiser import MetaData
 from utils import imshow
 import config
 
