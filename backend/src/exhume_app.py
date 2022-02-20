@@ -65,4 +65,6 @@ def exhume_image():
             }), 200
 
 if __name__ == '__main__':
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
     app.run(host='0.0.0.0', debug=True, port=4000)
